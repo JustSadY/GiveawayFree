@@ -105,6 +105,7 @@ async def on_ready():
             brain = current_href_set
         else:
             print("Siteye ulaşılamadı.")
+        time.sleep(100)
 
 
 Bot.run(TOKEN)
