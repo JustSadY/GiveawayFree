@@ -54,7 +54,7 @@ password_alien = driver.find_element(By.NAME, "_password")
 submit_alien = driver.find_element(By.NAME, "_login")
 email_alien.send_keys(email)
 password_alien.send_keys(password)
-time.sleep(9990)
+time.sleep(10)
 submit_alien.click()
 
 Bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
