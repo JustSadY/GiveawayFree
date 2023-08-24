@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-email = "example@hotmail.com"
+email = "Mail@example.com"
 password = "Password"
 
 site_alian_url = "https://na.alienwarearena.com/ucf/Giveaway"
@@ -24,6 +24,7 @@ submit_alien = driver.find_element(By.NAME, "_login")
 
 email_alien.send_keys(email)
 password_alien.send_keys(password)
+time.sleep(10)
 submit_alien.click()
 
 while True:
@@ -43,11 +44,19 @@ while True:
         last_alian = [
             prefix + item for item in new_hrefs if prefix + item not in giveaway
         ]
+        driver.get(site_alian_url)
+        time.sleep(10)
+        try:
+            give = driver.find_element(By.ID, "giveaway-get-key")
+            give.click()
+        except:
+            print("Couldn't claim giveaway:", href)
 
         if last_alian:
             for href in last_alian:
                 with open("giveaway.txt", "a") as file:
                     file.write(href + "\n")
+                time.sleep(10)
                 driver.get(href)
                 try:
                     give = driver.find_element(By.ID, "giveaway-get-key")
