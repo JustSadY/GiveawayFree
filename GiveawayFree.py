@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+# Hesap bilgilerini dosyadan oku
 with open("Account.txt", "r") as keys:
     content = keys.read()
     start_index_email = content.find("Email :")
@@ -13,7 +14,7 @@ with open("Account.txt", "r") as keys:
     start_index_token = content.find("Token :")
     start_index_ID = content.find("ID :")
 
-    if start_index_email and start_index_token:
+    if start_index_email >= 0 and start_index_token >= 0:
         start_index_email += len("Email :")
         end_index_email = content.find("\n", start_index_email)
 
@@ -26,17 +27,17 @@ with open("Account.txt", "r") as keys:
         start_index_ID += len("ID :")
         end_index_ID = content.find("\n", start_index_ID)
 
-        if end_index_email and end_index_token:
+        if end_index_email >= 0 and end_index_token >= 0:
             email = content[start_index_email:end_index_email]
             password = content[start_index_Password:end_index_Password]
             TOKEN = content[start_index_token:end_index_token]
             id = int(content[start_index_ID:end_index_ID])
         else:
-            print("hatalı biçimde yazılmış.")
-            quit
+            print("Hatalı biçimde yazılmış.")
+            quit()
     else:
         print("Hesap bilgisi bulunamadı.")
-        quit
+        quit()
 
 site_alian_url = "https://na.alienwarearena.com/ucf/Giveaway"
 login_alian_url = "https://na.alienwarearena.com/login"
@@ -65,46 +66,54 @@ async def on_ready():
     channel_id = id
     channel = Bot.get_channel(channel_id)
     while True:
-        response = requests.get(site_alian_url)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, "html.parser")
-            current_href_set = set(
-                [
-                    link.get("href")
-                    for link in soup.find_all("a", href=True)
-                    if link.get("href").startswith("/ucf/show")
+        driver.get(site_alian_url)
+        try:
+            give = driver.find_element(By.ID, "giveaway-get-key")
+            give.click()
+            time.sleep(10)
+            comple = driver.find_element(By.XPATH, "/html/body/div[6]/span/p[1]").text
+            await channel.send(comple)
+        except:
+            response = requests.get(site_alian_url)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, "html.parser")
+                current_href_set = set(
+                    [
+                        link.get("href")
+                        for link in soup.find_all("a", href=True)
+                        if link.get("href").startswith("/ucf/show")
+                    ]
+                )
+                new_hrefs = current_href_set - brain
+                prefix = "https://na.alienwarearena.com"
+                last_alien = [
+                    prefix + item for item in new_hrefs if prefix + item not in giveaway
                 ]
-            )
-            new_hrefs = current_href_set - brain
-            prefix = "https://na.alienwarearena.com"
-            last_alian = [
-                prefix + item for item in new_hrefs if prefix + item not in giveaway
-            ]
-            if last_alian:
-                for href in last_alian:
-                    with open("giveaway.txt", "a") as file:
-                        file.write(href + "\n")
-                    driver.get(href)
-                    try:
-                        give = driver.find_element(By.ID, "giveaway-get-key")
-                        give.click()
-                        time.sleep(10)
-                        comple = driver.find_element(
-                            By.XPATH, "/html/body/div[6]/span/p[1]"
-                        ).text
-                        await channel.send(comple)
-                    except:
+                if last_alien:
+                    for href in last_alien:
+                        with open("giveaway.txt", "a") as file:
+                            file.write(href + "\n")
+                        driver.get(href)
                         try:
+                            give = driver.find_element(By.ID, "giveaway-get-key")
+                            give.click()
                             time.sleep(10)
                             comple = driver.find_element(
                                 By.XPATH, "/html/body/div[6]/span/p[1]"
                             ).text
                             await channel.send(comple)
                         except:
-                            await channel.send(href)
-            brain = current_href_set
-        else:
-            print("Siteye ulaşılamadı.")
+                            try:
+                                time.sleep(10)
+                                comple = driver.find_element(
+                                    By.XPATH, "/html/body/div[6]/span/p[1]"
+                                ).text
+                                await channel.send(comple)
+                            except:
+                                await channel.send(href)
+                brain = current_href_set
+            else:
+                print("Siteye ulaşılamadı.")
         time.sleep(100)
 
 
